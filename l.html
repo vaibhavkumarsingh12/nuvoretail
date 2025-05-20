@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Virtual Try-On with Gemini 2.0 Flash</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .connector {
+            position: relative;
+            flex-grow: 1;
+            height: 4px;
+            background-color: #9CA3AF;
+            min-width: 50px;
+        }
+        .connector::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: 50%;
+            transform: translateY(-50%) translateX(100%);
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 10px solid #9CA3AF;
+        }
+        .image-placeholder {
+            background-color: #F3F4F6;
+            border: 2px dashed #D1D5DB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #6B7280;
+            font-size: 0.875rem;
+            min-height: 200px;
+            aspect-ratio: 3 / 4;
+            overflow: hidden;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #EC4899;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-700 min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 text-white">
+    <div class="w-full max-w-5xl mx-auto">
+        <header class="text-center mb-8 sm:mb-12">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500">
+                Virtual Try-On Shopping ✨ AI Enhanced
+            </h1>
+        </header>
+
+        <!-- Main Content -->
+        <div class="flex flex-col md:flex-row items-start justify-around gap-6 md:gap-4 w-full">
+            <!-- Input Sections -->
+            <div class="flex flex-col items-center gap-6 w-full md:w-auto">
+                <!-- User Image Upload -->
+                <div class="flex flex-col items-center w-full max-w-xs sm:w-2/3 md:w-60 lg:w-72">
+                    <div id="userInputFrame" class="image-placeholder rounded-xl shadow-2xl w-full">
+                        <span class="p-4">Your Photo Here</span>
+                    </div>
+                    <input type="file" id="userImageUpload" accept="image/*" class="hidden">
+                    <button id="userImageUploadBtn" class="mt-2 w-full text-sm bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-lg transition-colors">
+                        Upload Your Photo
+                    </button>
+                </div>
+
+                <!-- Item Image Upload -->
+                <div class="flex flex-col items-center w-full max-w-xs sm:w-2/3 md:w-60 lg:w-72">
+                    <div id="itemFrame" class="image-placeholder rounded-xl shadow-2xl w-full">
+                        <span class="p-4">Item Photo Here</span>
+                    </div>
+                    <input type="file" id="itemImageUpload" accept="image/*" class="hidden">
+                    <button id="itemImageUploadBtn" class="mt-2 w-full text-sm bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-lg transition-colors">
+                        Upload Item Photo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="flex flex-col items-center w-full max-w-xs sm:w-2/3 md:w-60 lg:w-72 md:self-start">
+                <div id="outputFrame" class="image-placeholder rounded-xl shadow-2xl w-full bg-gray-700">
+                    <span class="p-4 text-sky-300">AI Generated Result</span>
+                </div>
+                <button id="generateImageBtn" class="mt-3 w-full text-sm bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-2 px-4 rounded-lg transition-colors">
+                    ✨ Generate Try-On
+                </button>
+                <div id="statusMessage" class="mt-2 text-sm text-center"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const userInputFrame = document.getElementById('userInputFrame');
+        const userImageUpload = document.getElementById('userImageUpload');
+        const userImageUploadBtn = document.getElementById('userImageUploadBtn');
+        
+        const itemFrame = document.getElementById('itemFrame');
+        const itemImageUpload = document.getElementById('itemImageUpload');
+        const itemImageUploadBtn = document.getElementById('itemImageUploadBtn');
+        
+        const outputFrame = document.getElementById('outputFrame');
+        const generateImageBtn = document.getElementById('generateImageBtn');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // API Configuration
+        const API_KEY = 'AIzaSyBhJs5B7iB_OOWcedHBFQLkr0PawsIG0RE'; // Replace with your API key
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${API_KEY}`;
+
+        // Event Listeners
+        userImageUploadBtn.addEventListener('click', () => userImageUpload.click());
+        itemImageUploadBtn.addEventListener('click', () => itemImageUpload.click());
+        
+        userImageUpload.addEventListener('change', handleImageUpload);
+        itemImageUpload.addEventListener('change', handleImageUpload);
+        generateImageBtn.addEventListener('click', generateTryOnImage);
+
+        // Image Upload Handler
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            const targetFrame = event.target.id === 'userImageUpload' ? userInputFrame : itemFrame;
+            
+            if (file && file.type.startsWith('image/')) {
+                try {
+                    const base64 = await convertToBase64(file);
+                    targetFrame.innerHTML = `
+                        <img src="${base64}" 
+                             class="w-full h-full object-cover rounded-xl"
+                             alt="Uploaded image">`;
+                } catch (error) {
+                    showError('Error processing image: ' + error.message);
+                }
+            }
+        }
+
+        // Main Generation Function
+        async function generateTryOnImage() {
+            if (!userImageUpload.files[0] || !itemImageUpload.files[0]) {
+                showError('Please upload both images first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const [userImage, itemImage] = await Promise.all([
+                    convertToBase64(userImageUpload.files[0]),
+                    convertToBase64(itemImageUpload.files[0])
+                ]);
+
+                const payload = {
+                    contents: [{
+                        parts: [
+                            { text: "Generate realistic image of person wearing the clothing item while preserving original pose and background. Match lighting and proportions accurately." },
+                            { inlineData: { mimeType: "image/png", data: userImage } },
+                            { inlineData: { mimeType: "image/png", data: itemImage } }
+                        ]
+                    }],
+                    generationConfig: { responseModalities: ["IMAGE"] }
+                };
+
+                const response = await fetch(GEMINI_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                
+                if (data.candidates?.[0]?.content?.parts?.[0]?.inlineData) {
+                    const { data: imageData, mimeType } = data.candidates[0].content.parts[0].inlineData;
+                    outputFrame.innerHTML = `
+                        <img src="data:${mimeType};base64,${imageData}" 
+                             class="w-full h-full object-cover rounded-xl"
+                             alt="Generated try-on image">`;
+                    statusMessage.textContent = 'Success! Image generated with Gemini 2.0 Flash';
+                    statusMessage.style.color = '#4ade80';
+                } else {
+                    throw new Error(data.error?.message || 'Invalid API response');
+                }
+            } catch (error) {
+                showError('Generation failed: ' + error.message);
+                outputFrame.innerHTML = '<span class="p-4 text-red-400">Generation Error</span>';
+            }
+        }
+
+        // Utility Functions
+        function convertToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function showLoading() {
+            outputFrame.innerHTML = '<div class="loading-spinner"></div>';
+            statusMessage.textContent = 'Generating... This may take 10-20 seconds';
+            statusMessage.style.color = '#94a3b8';
+        }
+
+        function showError(message) {
+            statusMessage.textContent = message;
+            statusMessage.style.color = '#f87171';
+        }
+    </script>
+</body>
+</html>

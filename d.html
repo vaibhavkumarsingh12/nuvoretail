@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Try-On Shopping with AI ✨</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .connector {
+            position: relative;
+            flex-grow: 1;
+            height: 4px;
+            background-color: #9CA3AF; /* gray-400 */
+            min-width: 50px;
+        }
+        .connector::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: 50%;
+            transform: translateY(-50%) translateX(100%);
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 10px solid #9CA3AF; /* gray-400 */
+        }
+        .image-placeholder {
+            background-color: #F3F4F6; /* gray-100 */
+            border: 2px dashed #D1D5DB; /* gray-300 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #6B7280; /* gray-500 */
+            font-size: 0.875rem; /* text-sm */
+            min-height: 200px;
+            aspect-ratio: 3 / 4;
+            overflow: hidden;
+        }
+        .image-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .ai-feature-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            border-radius: 0.75rem; /* rounded-xl */
+            margin-top: 0.75rem; /* mt-3 */
+            min-height: 80px;
+            color: #E5E7EB; /* gray-200 */
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #EC4899; /* pink-500 */
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto; /* Center spinner */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Custom button style for AI features */
+        .ai-button {
+            background-image: linear-gradient(to right, #EC4899, #EF4444, #F59E0B); /* pink-500, red-500, yellow-500 */
+            color: white;
+            font-weight: 600; /* semibold */
+            padding: 0.625rem 1.25rem; /* py-2.5 px-5 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); /* shadow-md */
+            transition: all 0.3s ease-in-out;
+        }
+        .ai-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); /* shadow-lg */
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-700 min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 text-white">
+
+    <div class="w-full max-w-5xl mx-auto">
+        <header class="text-center mb-8 sm:mb-12">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500">
+                Virtual Try-On Shopping ✨ AI Enhanced
+            </h1>
+            <p class="mt-3 text-base sm:text-lg text-slate-300">
+                Visualize items, get style tips, and describe your new look with AI!
+            </p>
+        </header>
+
+        <div class="flex flex-col md:flex-row items-start md:items-start justify-around gap-6 md:gap-4 w-full">
+
+            <div class="flex flex-col items-center gap-6 w-full md:w-auto">
+                <div class="flex flex-col items-center w-full max-w-xs sm:w-2/3 md:w-60 lg:w-72">
+                    <div id="userInputFrame" class="image-placeholder rounded-xl shadow-2xl w-full">
+                        <img src="1st.jpg" alt="User Upload" class="rounded-xl">
+                    </div>
+                    <p class="mt-3 text-sm text-slate-400 font-medium">1. Upload Your Image</p>
+                    </div>
+
+                <div class="text-3xl text-gray-400 md:hidden">&darr;</div>
+
+                <div class="flex flex-col items-center w-full max-w-xs sm:w-2/3 md:w-60 lg:w-72">
+                    <div id="itemFrame" class="image-placeholder rounded-xl shadow-2xl w-full">
+                        <img src="2nc.jpg" alt="Item Photo" class="rounded-xl">
+                    </div>
+                    <p class="mt-3 text-sm text-slate-400 font-medium">2. Select Item</p>
+                     <input type="text" id="itemCategoryInput" placeholder="e.g., 'summer dress'" class="mt-2 w-full p-2 rounded-md border border-slate-600 bg-slate-700 text-slate-200 placeholder-slate-400 text-sm focus:ring-pink-500 focus:border-pink-500">
+                    <button id="getFashionTipsBtn" class="ai-button mt-3 w-full text-sm">✨ Get Fashion Tips</button>
+                    <div id="fashionTipsResult" class="ai-feature-card w-full text-sm">
+                        <p class="text-slate-400">AI fashion tips will appear here...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full md:w-auto flex justify-center items-center my-4 md:my-0 md:mx-4 lg:mx-8 md:self-center">
+                <div class="connector hidden md:block w-16 lg:w-24"></div>
+                <div class="block md:hidden text-3xl text-gray-400">&darr;</div>
+            </div>
+
+            <div class="flex flex-col items-center w-full max-w-xs sm:w-2/3 md:w-60 lg:w-72 md:self-start">
+                <div id="outputFrame" class="image-placeholder rounded-xl shadow-2xl w-full bg-gray-200 border-green-500">
+                    <img src="image.png" alt="Output Image" class="rounded-xl">
+                </div>
+                <p class="mt-3 text-sm text-slate-400 font-medium">3. See the Result!</p>
+                <button id="describeLookBtn" class="ai-button mt-3 w-full text-sm">✨ Describe My New Look!</button>
+                <div id="lookDescriptionResult" class="ai-feature-card w-full text-sm">
+                    <p class="text-slate-400">AI look description will appear here...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-12 text-center">
+            <p class="text-xs text-slate-500">Main "Start Try-On" functionality would involve image processing (not included in this AI demo).</p>
+        </div>
+    </div>
+
+    <script>
+        // Get references to DOM elements
+        const itemCategoryInput = document.getElementById('itemCategoryInput');
+        const getFashionTipsBtn = document.getElementById('getFashionTipsBtn');
+        const fashionTipsResult = document.getElementById('fashionTipsResult');
+        const describeLookBtn = document.getElementById('describeLookBtn');
+        const lookDescriptionResult = document.getElementById('lookDescriptionResult');
+
+        // API Configuration
+        const apiKey = "AIzaSyBhJs5B7iB_OOWcedHBFQLkr0PawsIG0RE";
+        const genAIApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+        /**
+         * Shows a loading indicator in the specified result element.
+         * @param {HTMLElement} resultElement - The element to show loading in.
+         */
+        function showLoading(resultElement) {
+            resultElement.innerHTML = '<div class="loading-spinner"></div><p class="text-center text-xs text-slate-400 mt-2">AI is thinking...</p>';
+        }
+
+        /**
+         * Displays an error message in the specified result element.
+         * @param {HTMLElement} resultElement - The element to show the error in.
+         * @param {string} error - The error message.
+         */
+        function showError(resultElement, error) {
+            resultElement.innerHTML = `<p class="text-red-400 text-xs text-center">Error: ${error}</p>`;
+            console.error("Gemini API Error:", error);
+        }
+        
+        /**
+         * Calls the Gemini API to generate content.
+         * @param {string} prompt - The prompt to send to the API.
+         * @param {HTMLElement} resultElement - The DOM element to display the result or loading/error state.
+         */
+        async function callGeminiAPI(prompt, resultElement) {
+            showLoading(resultElement);
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistory };
+
+            try {
+                const response = await fetch(genAIApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error ? errorData.error.message : `API request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    // Sanitize text slightly for display (newlines)
+                    resultElement.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+                } else {
+                    throw new Error("No content found in API response.");
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                showError(resultElement, error.message || "Could not fetch response.");
+            }
+        }
+
+        // Event Listener for "Get Fashion Tips"
+        getFashionTipsBtn.addEventListener('click', () => {
+            const itemCategory = itemCategoryInput.value.trim();
+            if (!itemCategory) {
+                showError(fashionTipsResult, "Please enter an item category (e.g., 'sunglasses', 'winter coat').");
+                return;
+            }
+            const prompt = `Provide 3 concise fashion tips for styling a "${itemCategory}". Format each tip as a bullet point.`;
+            callGeminiAPI(prompt, fashionTipsResult);
+        });
+
+        // Event Listener for "Describe My New Look!"
+        describeLookBtn.addEventListener('click', () => {
+            const itemCategory = itemCategoryInput.value.trim(); // Using the same item category for simplicity
+            if (!itemCategory) {
+                 showError(lookDescriptionResult, "Please enter an item category first to get a look description.");
+                return;
+            }
+            const prompt = `Generate a fun, stylish, and short (1-2 sentences) description for someone who has just virtually tried on a "${itemCategory}" and looks fantastic. Be enthusiastic!`;
+            callGeminiAPI(prompt, lookDescriptionResult);
+        });
+
+        // Example of how you might handle image uploads (simplified)
+        // const userImageUpload = document.getElementById('userImageUpload');
+        // const userInputFrame = document.getElementById('userInputFrame');
+        // if (userImageUpload) {
+        //     userImageUpload.addEventListener('change', function(event) {
+        //         if (event.target.files && event.target.files[0]) {
+        //             const reader = new FileReader();
+        //             reader.onload = function(e) {
+        //                 userInputFrame.innerHTML = `<img src="${e.target.result}" alt="User Upload" class="rounded-xl">`;
+        //             }
+        //             reader.readAsDataURL(event.target.files[0]);
+        //         } else {
+        //             userInputFrame.innerHTML = '<span class="p-4">Your Photo Here<br>(e.g., a picture of you)</span>';
+        //         }
+        //     });
+        // }
+    </script>
+
+</body>
+</html>
