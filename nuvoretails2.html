@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Report: AI-Driven E-Commerce Marketing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F0F8FF; /* AliceBlue - Light blue/off-white */
+            color: #000080; /* Navy - Darker blue */
+            scroll-behavior: smooth;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Default max-width */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 400px; /* Max height */
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #F28C28; /* Vibrant Orange */
+            border-bottom-color: #F28C28; /* Vibrant Orange */
+        }
+        .section-card {
+            background-color: #FFFFFF; /* White */
+            border-radius: 0.75rem; /* 12px */
+            padding: 2rem; /* 32px */
+            margin-bottom: 2rem; /* 32px */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .stat-card {
+            background-color: #2A4A6B; /* Steel Blue */
+            color: #FFFFFF; /* White */
+            border-radius: 0.5rem; /* 8px */
+            padding: 1.5rem; /* 24px */
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.25rem; /* 36px */
+            font-weight: 700;
+            color: #F28C28; /* Vibrant Orange */
+        }
+        .stat-label {
+            font-size: 0.875rem; /* 14px */
+            margin-top: 0.5rem; /* 8px */
+        }
+        .table-header {
+            background-color: #ADD8E6; /* LightBlue */
+            color: #000080; /* Navy */
+            font-weight: 600;
+        }
+        .table-cell {
+            padding: 0.75rem; /* 12px */
+            border: 1px solid #B0C4DE; /* LightSteelBlue */
+        }
+        .accent-text {
+            color: #F28C28; /* Vibrant Orange */
+        }
+        .primary-accent-bg {
+            background-color: #2A4A6B; /* Steel Blue */
+        }
+        .secondary-accent-text {
+            color: #2A4A6B; /* Steel Blue */
+        }
+        .subtle-accent-border {
+            border-color: #B0C4DE; /* LightSteelBlue */
+        }
+        h1, h2, h3 {
+            color: #2A4A6B; /* Steel Blue for headings */
+        }
+        .ai-insight-btn, .ai-summary-btn {
+            background-color: #F28C28; /* Vibrant Orange */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+        .ai-insight-btn:hover, .ai-summary-btn:hover {
+            background-color: #D97706; /* Darker Orange */
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #FFFFFF;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .modal-close-btn {
+            background-color: #2A4A6B; /* Steel Blue */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            float: right;
+            border: none;
+        }
+        .loading-indicator {
+            display: none; /* Hidden by default */
+            text-align: center;
+            padding: 1rem;
+            color: #2A4A6B; /* Steel Blue */
+        }
+        .loading-indicator.active {
+            display: block;
+        }
+        .summary-output {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #E6F0FA; /* Very light blue */
+            border: 1px solid #B0C4DE; /* LightSteelBlue */
+            border-radius: 0.375rem;
+            font-size: 0.9rem;
+            color: #000080; /* Navy */
+        }
+
+        /* Placeholder Comments */
+        /* */
+        /* */
+        /* <!-- Visualization & Content Choices:
+            - Table 1 (AI Market Growth): Goal: Change -> Chart.js Line Chart. Library: Chart.js (Canvas).
+            - AI Applications (Sec 2.1): Goal: Inform -> HTML cards. Method: HTML/CSS.
+            - Table 2 (SEO vs. LEO): Goal: Compare -> HTML Table. Method: HTML/CSS.
+            - LLM Market Growth & ChatGPT Users (Sec 3.3): Goal: Inform/Change -> Chart.js Bar Chart (LLM Market), HTML "Big Number" (ChatGPT Users). Library: Chart.js (Canvas) & HTML/CSS.
+            - LEO Strategies (Sec 3.4): Goal: Organize/Elaborate -> Interactive HTML list. Interaction: Click to expand details (original) + NEW '✨ AI Insights' button per strategy to call Gemini API for deeper explanation/examples displayed in a modal. Method: HTML/CSS/JS & Gemini API.
+            - Table 3 (Video Commerce Market): Goal: Change -> Chart.js Line Chart. Library: Chart.js (Canvas).
+            - UGVC Impact (Sec 4.2): Goal: Inform/Compare -> HTML "Big Number" stats. Method: HTML/CSS.
+            - Table 4 (Gen Z Video): Goal: Compare/Inform -> Chart.js Doughnut Chart (Daily Consumption), HTML "Big Number" (TikTok Influence). Library: Chart.js (Canvas) & HTML/CSS.
+            - Vyrill Impact (Sec 5.1): Goal: Inform -> HTML "Big Number" cards/list. Method: HTML/CSS.
+            - ChatGPT x Shopify Apps (Sec 5.2): Goal: Organize -> HTML list. Method: HTML/CSS.
+            - Strategic Imperatives (Sec 6): Goal: Organize -> HTML cards. Method: HTML/CSS.
+            - NEW Section Summaries: Goal: Synthesize/Inform -> '✨ AI Summary' button at end of each main section. Interaction: Calls Gemini API to summarize section text, displayed below button. Method: JS & Gemini API.
+            CONFIRMING NO SVG/Mermaid, supporting the DESIGNED structure.
+        --> */
+        /* */
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-3 flex flex-wrap justify-between items-center">
+            <a href="#hero" class="text-xl font-bold secondary-accent-text">AI E-Commerce Report</a>
+            <button id="nav-toggle" class="md:hidden focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+            <div id="nav-content" class="w-full md:flex md:items-center md:w-auto hidden md:block">
+                <ul class="md:flex md:space-x-8 mt-4 md:mt-0 text-sm">
+                    <li><a href="#ai-revolution" class="nav-link block py-2 border-b-2 border-transparent">AI Revolution</a></li>
+                    <li><a href="#seo-to-leo" class="nav-link block py-2 border-b-2 border-transparent">SEO to LEO</a></li>
+                    <li><a href="#video-commerce" class="nav-link block py-2 border-b-2 border-transparent">Video Commerce</a></li>
+                    <li><a href="#ai-tools" class="nav-link block py-2 border-b-2 border-transparent">AI Tools</a></li>
+                    <li><a href="#strategic-imperatives" class="nav-link block py-2 border-b-2 border-transparent">Strategy</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header id="hero" class="primary-accent-bg text-white py-16 md:py-24 text-center">
+        <div class="container mx-auto px-6">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-white">From SEO to LEO:</h1>
+            <p class="text-2xl md:text-3xl mb-8 text-gray-200">AI-Driven Marketing for the Future of E-Commerce</p>
+            <p class="text-lg text-gray-300 max-w-3xl mx-auto">An interactive exploration of how Artificial Intelligence, LLM-based Engine Optimization, and Video Commerce are reshaping online retail and marketing strategies.</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="ai-revolution" class="section-card scroll-mt-20">
+            <h2 class="text-3xl font-bold mb-6 text-center">The AI Revolution in E-commerce</h2>
+            <div class="main-content">
+                <p class="text-lg mb-8 text-gray-700 text-center">This section delves into the current landscape of AI integration in online retail, its diverse applications, and the significant market growth projected for AI in e-commerce. It highlights how AI is moving from a supplementary tool to a core component of the e-commerce infrastructure, driving personalization and operational efficiency.</p>
+                <div class="grid md:grid-cols-2 gap-8 items-center mb-12">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4">AI-Enabled E-commerce Market Growth</h3>
+                        <p class="text-gray-600 mb-4">The global market for AI in e-commerce is on a significant upward trajectory, indicating a transformative growth phase. This chart illustrates the projected market size expansion, underscoring the increasing investment and adoption of AI technologies in the retail sector.</p>
+                        <div class="chart-container">
+                            <canvas id="aiMarketGrowthChart"></canvas>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">Data Source: Report Table 1</p>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4">Key AI Applications in Retail</h3>
+                        <p class="text-gray-600 mb-6">AI is being applied in numerous ways to enhance the e-commerce experience and streamline operations. Below are some of the most impactful applications:</p>
+                        <div class="space-y-4">
+                            <div class="p-4 border subtle-accent-border rounded-lg">
+                                <h4 class="font-semibold text-lg secondary-accent-text">🛍️ Hyper-Personalization</h4>
+                                <p class="text-sm text-gray-600">AI analyzes customer data to deliver tailored product recommendations and shopping experiences.</p>
+                            </div>
+                            <div class="p-4 border subtle-accent-border rounded-lg">
+                                <h4 class="font-semibold text-lg secondary-accent-text">📈 Predictive Analytics</h4>
+                                <p class="text-sm text-gray-600">Enables accurate demand forecasting, optimizing inventory and supply chains.</p>
+                            </div>
+                            <div class="p-4 border subtle-accent-border rounded-lg">
+                                <h4 class="font-semibold text-lg secondary-accent-text">💬 AI-Driven Customer Service</h4>
+                                <p class="text-sm text-gray-600">Chatbots and virtual assistants provide 24/7 support, improving responsiveness.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center">
+                     <h3 class="text-2xl font-semibold mb-4">Generative AI Adoption</h3>
+                    <p class="text-gray-700 mb-2">Generative AI is rapidly being adopted for shopping assistance:</p>
+                    <div class="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                        <div class="stat-card">
+                            <div class="stat-number">1300%</div>
+                            <div class="stat-label">YoY increase in retail site traffic from GenAI (late 2024)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">61%</div>
+                            <div class="stat-label">Of consumers used GenAI tools for online shopping</div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2">Source: Report Sec 2.1</p>
+                </div>
+            </div>
+            <div class="mt-8 text-center">
+                <button class="ai-summary-btn" data-section-id="ai-revolution">✨ Summarize Section with AI</button>
+                <div class="loading-indicator">Loading AI summary...</div>
+                <div class="summary-output" style="display: none;"></div>
+            </div>
+        </section>
+
+        <section id="seo-to-leo" class="section-card scroll-mt-20">
+            <h2 class="text-3xl font-bold mb-6 text-center">The Paradigm Shift: SEO to LEO</h2>
+            <div class="main-content">
+                <p class="text-lg mb-8 text-gray-700 text-center">This section explores the evolution from traditional Search Engine Optimization (SEO) to LLM-based Engine Optimization (LEO). It defines LEO, compares it with SEO, discusses its benefits and challenges, and provides actionable strategies for optimizing e-commerce content for Large Language Models.</p>
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold mb-4 text-center">SEO vs. LEO: A Comparative Overview</h3>
+                    <p class="text-gray-600 mb-4 text-center max-w-3xl mx-auto">Understanding the distinctions between SEO and LEO is crucial for modern e-commerce strategies. While SEO focuses on search engine algorithms, LEO targets Large Language Models, emphasizing natural language, context, and E-E-A-T signals.</p>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full border-collapse">
+                            <thead>
+                                <tr class="table-header">
+                                    <th class="table-cell text-left">Feature</th>
+                                    <th class="table-cell text-left">Traditional SEO</th>
+                                    <th class="table-cell text-left">LEO (LLM-based Engine Optimization)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="table-cell font-semibold">Primary Goal</td>
+                                    <td class="table-cell">High SERP rankings.</td>
+                                    <td class="table-cell">Favorable surfacing by LLMs in conversational search & AI answers.</td>
+                                </tr>
+                                <tr>
+                                    <td class="table-cell font-semibold">Target</td>
+                                    <td class="table-cell">Search engine algorithms.</td>
+                                    <td class="table-cell">Large Language Models (ChatGPT, Gemini).</td>
+                                </tr>
+                                <tr>
+                                    <td class="table-cell font-semibold">Content Focus</td>
+                                    <td class="table-cell">Keywords, backlinks, technical health.</td>
+                                    <td class="table-cell">Natural language, context, E-E-A-T, human-like content.</td>
+                                </tr>
+                                 <tr>
+                                    <td class="table-cell font-semibold">E-commerce Implication</td>
+                                    <td class="table-cell">Drive traffic for direct conversion.</td>
+                                    <td class="table-cell">Influence discovery in conversational AI, establish authority.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Data Source: Report Table 2</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8 items-start mb-12">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4">LLM Market & Adoption</h3>
+                        <p class="text-gray-600 mb-4">The Large Language Model market is experiencing significant growth, alongside increasing user engagement with tools like ChatGPT, highlighting the urgency for LEO adoption.</p>
+                        <div class="chart-container mb-8">
+                            <canvas id="llmMarketGrowthChart"></canvas>
+                        </div>
+                         <div class="stat-card">
+                            <div class="stat-number">21%</div>
+                            <div class="stat-label">Of U.S. web users visit ChatGPT monthly</div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">LLM Market Projection & ChatGPT Usage. Source: Report Sec 3.3</p>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4">Actionable LEO Strategies for E-commerce</h3>
+                        <p class="text-gray-600 mb-4">Optimizing product pages for LLMs involves a dual approach: structured data for parsing and rich, conversational content for human-like summaries.</p>
+                        <div id="leo-strategies-container" class="space-y-3">
+                            </div>
+                         <p class="text-xs text-gray-500 mt-2">Key strategies from Report Sec 3.4. Click title to expand, or AI button for insights.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 text-center">
+                <button class="ai-summary-btn" data-section-id="seo-to-leo">✨ Summarize Section with AI</button>
+                <div class="loading-indicator">Loading AI summary...</div>
+                <div class="summary-output" style="display: none;"></div>
+            </div>
+        </section>
+
+        <section id="video-commerce" class="section-card scroll-mt-20">
+            <h2 class="text-3xl font-bold mb-6 text-center">Video Commerce: The Engagement Epicenter</h2>
+            <div class="main-content">
+                <p class="text-lg mb-8 text-gray-700 text-center">This section highlights the explosive growth of video commerce, driven by enhanced customer engagement and the preference of younger demographics. It also emphasizes the power of authentic User-Generated Video Content (UGVC) and analyzes Gen Z's video-first consumption habits.</p>
+                <div class="grid md:grid-cols-2 gap-8 items-center mb-12">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4">Video Commerce Market Surge</h3>
+                        <p class="text-gray-600 mb-4">The global video commerce market is set for remarkable growth, transforming how products are discovered and purchased online. This chart depicts its projected expansion.</p>
+                        <div class="chart-container">
+                            <canvas id="videoCommerceMarketChart"></canvas>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">Data Source: Report Table 3</p>
+                    </div>
+                     <div>
+                        <h3 class="text-2xl font-semibold mb-4">The Power of Authentic UGVC</h3>
+                        <p class="text-gray-600 mb-6">User-Generated Video Content is highly trusted and significantly impacts purchasing decisions, especially for Gen Z and Millennials. Authenticity is key.</p>
+                        <div class="space-y-4">
+                            <div class="stat-card">
+                                <div class="stat-number">9.8x</div>
+                                <div class="stat-label">More impactful & authentic is UGC than influencer content</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">29%</div>
+                                <div class="stat-label">Increase in web conversions for brands using UGC</div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">Source: Report Sec 4.2</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold mb-6 text-center">Decoding Gen Z: Video-First & Socially Driven</h3>
+                    <p class="text-gray-700 mb-6 text-center max-w-3xl mx-auto">Gen Z's media consumption is distinctly video-first, with platforms like TikTok heavily influencing their purchasing decisions. Authenticity and peer validation are paramount for this demographic.</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div class="chart-container">
+                            <canvas id="genZVideoConsumptionChart"></canvas>
+                             <p class="text-xs text-gray-500 mt-2 text-center">Gen Z Daily Online Video Consumption. Source: Report Table 4</p>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="stat-card">
+                                <div class="stat-number">72%</div>
+                                <div class="stat-label">Of Gen Z TikTok users influenced by the platform in purchases</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">70%</div>
+                                <div class="stat-label">Of Gen Z find UGC helpful in their buying journey</div>
+                            </div>
+                             <p class="text-xs text-gray-500 mt-2 text-center">Source: Report Table 4 & Sec 4.3</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 text-center">
+                <button class="ai-summary-btn" data-section-id="video-commerce">✨ Summarize Section with AI</button>
+                <div class="loading-indicator">Loading AI summary...</div>
+                <div class="summary-output" style="display: none;"></div>
+            </div>
+        </section>
+
+        <section id="ai-tools" class="section-card scroll-mt-20">
+            <h2 class="text-3xl font-bold mb-6 text-center">AI-Powered Tools in Action</h2>
+            <div class="main-content">
+                <p class="text-lg mb-8 text-gray-700 text-center">This section focuses on specific AI tools revolutionizing e-commerce. It details how platforms like Vyrill are making video content intelligent and searchable, and how tools like ChatGPT, when integrated with Shopify, are fueling conversational commerce and content automation.</p>
+                <div class="grid md:grid-cols-2 gap-12">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4">Vyrill: Intelligent Video Analytics</h3>
+                        <p class="text-gray-600 mb-6">Vyrill transforms video into searchable, data-rich assets, enabling brands to leverage authentic video reviews for trust and conversions. Key impacts include:</p>
+                        <div class="space-y-3 mb-4">
+                            <div class="p-3 border subtle-accent-border rounded">📈 34% Higher Conversions Reported</div>
+                            <div class="p-3 border subtle-accent-border rounded">⏱️ +14 Mins Video Watch Time</div>
+                            <div class="p-3 border subtle-accent-border rounded">💰 13x Higher Average ROI</div>
+                        </div>
+                        <h4 class="font-semibold mb-2 secondary-accent-text">Case Study Highlights:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                            <li><strong>OurX:</strong> 233% CTR increase, 40% video consumption uplift.</li>
+                            <li><strong>ODR Skis:</strong> 131% site engagement increase.</li>
+                        </ul>
+                        <p class="text-xs text-gray-500 mt-2">Source: Report Sec 5.1</p>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4">ChatGPT x Shopify: Conversational Commerce</h3>
+                        <p class="text-gray-600 mb-6">The integration of LLMs like ChatGPT with platforms like Shopify enables sophisticated conversational commerce and automation. Key applications include:</p>
+                        <ul class="space-y-2 text-sm text-gray-700">
+                            <li class="flex items-start"><span class="accent-text mr-2">✍️</span> AI-driven product descriptions & blog posts.</li>
+                            <li class="flex items-start"><span class="accent-text mr-2">💡</span> Assistance with marketing strategies & campaign ideas.</li>
+                            <li class="flex items-start"><span class="accent-text mr-2">🛍️</span> Personalized product recommendations.</li>
+                            <li class="flex items-start"><span class="accent-text mr-2">💬</span> Automated customer service via AI chatbots.</li>
+                        </ul>
+                        <p class="text-gray-600 mt-4 text-sm">Human oversight is crucial for accuracy and brand alignment.</p>
+                        <p class="text-xs text-gray-500 mt-2">Source: Report Sec 5.2</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 text-center">
+                <button class="ai-summary-btn" data-section-id="ai-tools">✨ Summarize Section with AI</button>
+                <div class="loading-indicator">Loading AI summary...</div>
+                <div class="summary-output" style="display: none;"></div>
+            </div>
+        </section>
+
+        <section id="strategic-imperatives" class="section-card scroll-mt-20">
+            <h2 class="text-3xl font-bold mb-6 text-center">Strategic Imperatives for NuvoRetail</h2>
+            <div class="main-content">
+                <p class="text-lg mb-8 text-gray-700 text-center">This final section outlines key strategic imperatives for NuvoRetail to thrive in the AI-driven future. It covers embracing LEO, capitalizing on video commerce, intelligently integrating AI tools, building trust through authenticity, and fostering continuous adaptation.</p>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="p-6 border subtle-accent-border rounded-lg hover:shadow-lg transition-shadow">
+                        <h3 class="font-semibold text-xl mb-2 secondary-accent-text">🚀 Embrace LEO</h3>
+                        <p class="text-sm text-gray-600">Develop in-house LEO expertise and offer specialized services to clients for LLM optimization.</p>
+                    </div>
+                    <div class="p-6 border subtle-accent-border rounded-lg hover:shadow-lg transition-shadow">
+                        <h3 class="font-semibold text-xl mb-2 secondary-accent-text">🎬 Capitalize on Video</h3>
+                        <p class="text-sm text-gray-600">Advise on UGVC, Gen Z engagement, and implement shoppable video technologies.</p>
+                    </div>
+                    <div class="p-6 border subtle-accent-border rounded-lg hover:shadow-lg transition-shadow">
+                        <h3 class="font-semibold text-xl mb-2 secondary-accent-text">🛠️ Integrate AI Tools</h3>
+                        <p class="text-sm text-gray-600">Leverage tools like Vyrill and ChatGPT to offer advanced analytics and automation services.</p>
+                    </div>
+                    <div class="p-6 border subtle-accent-border rounded-lg hover:shadow-lg transition-shadow">
+                        <h3 class="font-semibold text-xl mb-2 secondary-accent-text">🛡️ Build Trust</h3>
+                        <p class="text-sm text-gray-600">Champion authenticity, ethical AI use, and transparency in all marketing efforts.</p>
+                    </div>
+                    <div class="p-6 border subtle-accent-border rounded-lg hover:shadow-lg transition-shadow">
+                        <h3 class="font-semibold text-xl mb-2 secondary-accent-text">🌱 Future-Proof</h3>
+                        <p class="text-sm text-gray-600">Foster continuous learning, proactive employee training, and embrace an augmented intelligence model.</p>
+                    </div>
+                </div>
+                 <p class="text-sm text-gray-600 mt-8 text-center">By adopting these strategies, NuvoRetail can navigate the evolving digital marketplace and deliver exceptional value.</p>
+            </div>
+            <div class="mt-8 text-center">
+                <button class="ai-summary-btn" data-section-id="strategic-imperatives">✨ Summarize Section with AI</button>
+                <div class="loading-indicator">Loading AI summary...</div>
+                <div class="summary-output" style="display: none;"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-8 text-center border-t border-gray-200">
+        <p class="text-sm text-gray-600">&copy; 2025 Interactive AI E-Commerce Marketing Report.</p>
+        <p class="text-xs text-gray-500 mt-1">Based on "From SEO to LEO: AI-Driven Marketing for the Future of E-Commerce". For illustrative purposes.</p>
+    </footer>
+
+    <div id="aiInsightModal" class="modal">
+        <div class="modal-content">
+            <button id="modalCloseBtn" class="modal-close-btn">Close</button>
+            <h3 id="modalTitle" class="text-2xl font-semibold mb-4 secondary-accent-text">AI Insights</h3>
+            <div class="loading-indicator" id="modalLoadingIndicator">Loading AI insights...</div>
+            <div id="modalBody" class="text-sm text-gray-700 leading-relaxed">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart.js Global Defaults
+        Chart.defaults.font.family = 'Inter';
+        Chart.defaults.color = '#000080'; // Navy for general chart text
+
+        const CHART_COLORS = {
+            accent1: '#2A4A6B', // Steel Blue
+            accent2: '#F28C28', // Vibrant Orange
+            accent3: '#6A8DAF', // Lighter Blue
+            background: 'rgba(42, 74, 107, 0.2)', // Steel Blue with alpha
+            background2: 'rgba(242, 140, 40, 0.2)', // Vibrant Orange with alpha
+        };
+
+        const commonChartOptions = (titleText) => ({
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#3A3A3A',
+                        font: { size: 12 }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: titleText,
+                    color: '#7C7267', 
+                    font: { size: 14, weight: '600' }
+                },
+                tooltip: {
+                    backgroundColor: '#FFFFFF',
+                    titleColor: '#7C7267',
+                    bodyColor: '#3A3A3A',
+                    borderColor: '#A8A29E',
+                    borderWidth: 1,
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#757575', font: { size: 10 } },
+                    grid: { color: '#EAE6E1' }
+                },
+                x: {
+                    ticks: { color: '#757575', font: { size: 10 } },
+                    grid: { display: false }
+                }
+            }
+        });
+        
+        function processLabel(label, maxLength = 16) {
+            if (typeof label !== 'string') return label;
+            if (label.length > maxLength) {
+                const words = label.split(' ');
+                const lines = [];
+                let currentLine = '';
+                for (const word of words) {
+                    if ((currentLine + word).length > maxLength && currentLine.length > 0) {
+                        lines.push(currentLine.trim());
+                        currentLine = word + ' ';
+                    } else {
+                        currentLine += word + ' ';
+                    }
+                }
+                lines.push(currentLine.trim());
+                return lines;
+            }
+            return label;
+        }
+
+        const aiMarketGrowthCtx = document.getElementById('aiMarketGrowthChart').getContext('2d');
+        new Chart(aiMarketGrowthCtx, {
+            type: 'line',
+            data: {
+                labels: ['2024', '2025', '2030', '2032'],
+                datasets: [{
+                    label: 'Market Size ($ Billions)',
+                    data: [7.57, 8.65, 17.10, 22.60],
+                    borderColor: CHART_COLORS.accent1,
+                    backgroundColor: CHART_COLORS.background,
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: commonChartOptions('AI-Enabled E-commerce Market Growth')
+        });
+
+        const llmMarketGrowthCtx = document.getElementById('llmMarketGrowthChart').getContext('2d');
+        new Chart(llmMarketGrowthCtx, {
+            type: 'bar',
+            data: {
+                labels: ['2025', '2034'],
+                datasets: [{
+                    label: 'Market Size ($ Billions)',
+                    data: [7.77, 123.09],
+                    backgroundColor: [CHART_COLORS.accent1, CHART_COLORS.accent2],
+                    borderColor: [CHART_COLORS.accent1, CHART_COLORS.accent2],
+                    borderWidth: 1
+                }]
+            },
+            options: commonChartOptions('Global LLM Market Size Projection')
+        });
+        
+        const videoCommerceMarketCtx = document.getElementById('videoCommerceMarketChart').getContext('2d');
+        new Chart(videoCommerceMarketCtx, {
+            type: 'line',
+            data: {
+                labels: ['2023', '2028', '2029'],
+                datasets: [{
+                    label: 'Market Size ($ Billions)',
+                    data: [695, 2800, 3700],
+                    borderColor: CHART_COLORS.accent2,
+                    backgroundColor: CHART_COLORS.background2,
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: commonChartOptions('Video Commerce Market Growth')
+        });
+
+        const genZVideoCtx = document.getElementById('genZVideoConsumptionChart').getContext('2d');
+        new Chart(genZVideoCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [processLabel('>3 hours/day'), processLabel('1-3 hours/day'), processLabel('<1 hour/day (Est.)')],
+                datasets: [{
+                    label: 'Daily Online Video Consumption',
+                    data: [70, 20, 10], 
+                    backgroundColor: [CHART_COLORS.accent1, CHART_COLORS.accent2, CHART_COLORS.accent3],
+                    hoverOffset: 4
+                }]
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'bottom', labels: { color: '#3A3A3A', font: {size: 10} } },
+                    title: { display: true, text: 'Gen Z Daily Video Consumption', color: '#7C7267', font: {size: 14, weight: '600'}},
+                    tooltip: commonChartOptions().plugins.tooltip
+                }
+            }
+        });
+
+        const leoStrategies = [
+            { title: "AI-Readable Content", detail: "Craft content using Q&A formats, semantic and context-rich text, and concise, scannable insights." },
+            { title: "Structured Data (Schema)", detail: "Leverage Schema.org extensively to provide explicit context to LLMs. Ensure metadata is machine-readable." },
+            { title: "Authority Building (E-E-A-T)", detail: "Publish research-backed, expert-driven content to establish Expertise, Authoritativeness, and Trustworthiness." },
+            { title: "Conversational Language", detail: "Use simple vocabulary, short sentences, and active voice. Avoid jargon." },
+            { title: "Detailed Product Specs", detail: "Provide comprehensive, clearly categorized, and accurately labeled product attributes." },
+            { title: "FAQs on Product Pages", detail: "Include a dedicated FAQ section addressing common customer questions." },
+            { title: "High-Quality Visuals", detail: "Optimize images/videos with descriptive alt text and transcriptions." },
+            { title: "Page Speed & Architecture", detail: "Ensure fast load times and simplified website architecture." }
+        ];
+        const leoContainer = document.getElementById('leo-strategies-container');
+        leoStrategies.forEach(strategy => {
+            const div = document.createElement('div');
+            div.className = 'p-3 border subtle-accent-border rounded-lg';
+            
+            const titleContainer = document.createElement('div');
+            titleContainer.className = 'flex justify-between items-center cursor-pointer';
+            
+            const titleH5 = document.createElement('h5');
+            titleH5.className = 'font-semibold secondary-accent-text';
+            titleH5.textContent = strategy.title;
+            
+            const aiButton = document.createElement('button');
+            aiButton.className = 'ai-insight-btn ml-2 text-xs px-2 py-1';
+            aiButton.innerHTML = '✨ AI Insights';
+            aiButton.dataset.strategyTitle = strategy.title;
+            aiButton.dataset.strategyDetail = strategy.detail;
+            aiButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent accordion toggle
+                handleAILEOInsight(strategy.title, strategy.detail);
+            });
+
+            titleContainer.appendChild(titleH5);
+            titleContainer.appendChild(aiButton);
+
+            const detailP = document.createElement('p');
+            detailP.className = 'text-sm text-gray-600 mt-1 hidden';
+            detailP.textContent = strategy.detail;
+            
+            titleContainer.addEventListener('click', () => {
+                detailP.classList.toggle('hidden');
+            });
+
+            div.appendChild(titleContainer);
+            div.appendChild(detailP);
+            leoContainer.appendChild(div);
+        });
+        
+        const navToggle = document.getElementById('nav-toggle');
+        const navContent = document.getElementById('nav-content');
+        navToggle.addEventListener('click', () => {
+            navContent.classList.toggle('hidden');
+        });
+
+        document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (window.innerWidth < 768) { // md breakpoint
+                    navContent.classList.add('hidden'); 
+                }
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        const sections = document.querySelectorAll('section');
+        const navLi = document.querySelectorAll('nav ul li a');
+        window.addEventListener('scroll', ()=> {
+            let current = '';
+            sections.forEach( section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= (sectionTop - sectionHeight / 2) ){ // Adjusted threshold
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLi.forEach( a => {
+                a.classList.remove('active');
+                if (a.getAttribute('href').substring(1) === current){
+                    a.classList.add('active');
+                }
+            });
+             // Ensure hero section doesn't make "AI Revolution" active prematurely
+            if (pageYOffset < sections[0].offsetTop - window.innerHeight / 2) {
+                 navLi.forEach(a => a.classList.remove('active'));
+            }
+        });
+
+        // AI Modal Logic
+        const aiInsightModal = document.getElementById('aiInsightModal');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const modalLoadingIndicator = document.getElementById('modalLoadingIndicator');
+
+        modalCloseBtn.addEventListener('click', () => {
+            aiInsightModal.classList.remove('active');
+        });
+        aiInsightModal.addEventListener('click', (e) => {
+            if (e.target === aiInsightModal) {
+                aiInsightModal.classList.remove('active');
+            }
+        });
+
+        async function callGeminiAPI(promptText) {
+            const apiKey = ""; // Handled by Canvas environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: promptText }]
+                }]
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Gemini API Error:", errorData);
+                    return `Error: ${errorData.error?.message || response.statusText}`;
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    console.error("Unexpected Gemini API response structure:", result);
+                    return "Error: Could not retrieve valid content from AI.";
+                }
+            } catch (error) {
+                console.error("Fetch error calling Gemini API:", error);
+                return "Error: Could not connect to AI service.";
+            }
+        }
+
+        async function handleAILEOInsight(strategyTitle, strategyDetail) {
+            modalTitle.textContent = `AI Insights for: ${strategyTitle}`;
+            modalBody.innerHTML = ''; // Clear previous content
+            modalLoadingIndicator.style.display = 'block';
+            aiInsightModal.classList.add('active');
+
+            const prompt = `Provide a deeper explanation and 2-3 practical, actionable examples for an e-commerce business on how to implement the LEO (LLM-based Engine Optimization) strategy: "${strategyTitle}: ${strategyDetail}". Focus on actionable advice and keep the tone professional and informative. Format the output clearly, perhaps using bullet points for examples.`;
+            
+            const aiResponse = await callGeminiAPI(prompt);
+            
+            modalLoadingIndicator.style.display = 'none';
+            modalBody.innerHTML = aiResponse.replace(/\n/g, '<br>'); // Basic formatting
+        }
+
+        document.querySelectorAll('.ai-summary-btn').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const sectionId = e.target.dataset.sectionId;
+                const sectionElement = document.getElementById(sectionId);
+                const mainContentElement = sectionElement.querySelector('.main-content');
+                const loadingIndicator = sectionElement.querySelector('.loading-indicator');
+                const summaryOutputDiv = sectionElement.querySelector('.summary-output');
+
+                if (!mainContentElement) {
+                    summaryOutputDiv.textContent = "Error: Could not find content for this section.";
+                    summaryOutputDiv.style.display = 'block';
+                    return;
+                }
+
+                summaryOutputDiv.style.display = 'none'; // Hide previous summary
+                summaryOutputDiv.innerHTML = '';
+                loadingIndicator.style.display = 'block';
+
+                let textToSummarize = "";
+                // Extract text from p, h3 (excluding chart titles), li elements within the main content
+                mainContentElement.querySelectorAll('p, h3, h4, li').forEach(el => {
+                    // Avoid extracting chart titles or very short utility text
+                    if (el.closest('.chart-container') || el.closest('.stat-card') || el.textContent.length < 20) return;
+                    textToSummarize += el.textContent + "\n\n";
+                });
+                
+                if (textToSummarize.trim().length === 0) {
+                    summaryOutputDiv.textContent = "Not enough text content in this section to summarize.";
+                    summaryOutputDiv.style.display = 'block';
+                    loadingIndicator.style.display = 'none';
+                    return;
+                }
+
+                const sectionTitle = sectionElement.querySelector('h2').textContent;
+                const prompt = `Summarize the key points from the following text about "${sectionTitle}" in 2-4 concise bullet points. Focus on the main takeaways for someone interested in e-commerce marketing. Text to summarize: \n\n${textToSummarize.substring(0, 15000)}`; // Limit prompt length
+
+
+                const aiSummary = await callGeminiAPI(prompt);
+
+                loadingIndicator.style.display = 'none';
+                summaryOutputDiv.innerHTML = aiSummary.replace(/\n/g, '<br>'); // Basic formatting
+                summaryOutputDiv.style.display = 'block';
+            });
+        });
+
+    </script>
+</body>
+</html>
